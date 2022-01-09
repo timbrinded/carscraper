@@ -1,4 +1,4 @@
 const url =
-  "mongodb://replacewithyourown:lo$#h$g6J8kd@ds111455.mlab.com:11455/craigslistcars";
+  "mongodb+srv://timbo:timbotimbo@craigslistlistings.2p8td.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 
 module.exports = url;

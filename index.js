@@ -1,13 +1,19 @@
-const request = require("request-promise");
+const request = require("request-promise-native");
 const cheerio = require("cheerio");
 const CraigslistCar = require("./model/CraiglistCar");
 const mongoDbUrl = require("./config/mongodb");
 const mongoose = require("mongoose");
 
-const url = "https://sfbay.craigslist.org/d/cars-trucks/search/cta";
+const url = "https://chico.craigslist.org/search/cta";
 
 async function scrapeCars() {
-  const result = await request.get(url);
+  const options = {
+    headers: {
+      "User-Agent": "Request-Promise",
+    },
+    json: true,
+  };
+  const result = await request.get(url, options);
   const $ = await cheerio.load(result);
   const cars = $(".result-info")
     .map((i, element) => {
@@ -15,9 +21,7 @@ async function scrapeCars() {
       const title = titleElement.text();
       const url = titleElement.attr("href");
       const timestamp = new Date(
-        $(element)
-          .find(".result-date")
-          .attr("datetime")
+        $(element).find(".result-date").attr("datetime")
       );
       return { title, timestamp, url };
     })
@@ -26,7 +30,7 @@ async function scrapeCars() {
 }
 
 async function insertCraigslistCarInMongoDb(carArray) {
-  const promises = carArray.map(async car => {
+  const promises = carArray.map(async (car) => {
     const carFromDb = await CraigslistCar.findOne({ url: car.url });
     if (!carFromDb) {
       const newCar = new CraigslistCar(car);
@@ -38,7 +42,10 @@ async function insertCraigslistCarInMongoDb(carArray) {
 
 async function main() {
   try {
-    await mongoose.connect(mongoDbUrl, { useNewUrlParser: true });
+    await mongoose.connect(mongoDbUrl, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     console.log("Connected to mongodb");
     const carArray = await scrapeCars();
     await insertCraigslistCarInMongoDb(carArray);
